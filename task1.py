@@ -2,6 +2,7 @@ from math import inf, sqrt
 from scipy.stats import norm, chi2
 import matplotlib.pyplot as plt
 from tabulate import tabulate
+from time import perf_counter
 
 
 def calc_centers(_intervals: dict) -> dict:
@@ -61,12 +62,16 @@ def calc_np_i(_intervals: dict, _sigma: float, _avg: float, _total: int) -> dict
     result = {}
     intervals_keys = list(_intervals.keys())
     i = 0
+    p_total = 0
     while i < len(intervals_keys):
         f1 = (intervals_keys[i][1] - avg) / sigma
         f2 = (intervals_keys[i][0] - avg) / sigma
+        p_total += norm.cdf(f1) - norm.cdf(f2)
         _np_i = _total * (norm.cdf(f1) - norm.cdf(f2))  # p_i
         result[intervals_keys[i]] = _np_i
         i += 1
+
+    # print('Сума імовірностей: ', p_total)
     return result
 
 
@@ -102,12 +107,12 @@ avg = calc_avg(intervals)
 disp = calc_disp(avg, intervals, total)
 sigma = sqrt(disp)
 np_i = calc_np_i(intervals, sigma, avg, total)
-x_emp = calc_x_emp(intervals, np_i)
-
+print('Сума імовірностей: ', sum([np_i[key] / total for key in np_i]))
 print(tabulate({'Інтервали': list(intervals.keys()), 'm_i': list(intervals.values()), 'z_i': list(centers.values()),
                 'np_i': list(np_i.values())},
                headers='keys', tablefmt='grid'))
 
+print(f'n = {total}')
 
 fig, ax = plt.subplots()
 plt.grid()
@@ -129,12 +134,14 @@ del intervals[last[0]]
 
 intervals = {**{(-inf, first[0][1]): first[1]}, **intervals, **{(last[0][0], inf): last[1]}}
 
-npi = calc_np_i(intervals, sigma, avg, total)
+np_i = calc_np_i(intervals, sigma, avg, total)
 
+x_emp = calc_x_emp(intervals, np_i)
 print(tabulate(
-    {"Об'єднані інтервали": list(intervals.keys()), 'm_i': list(intervals.values()), 'np_i': list(npi.values())},
+    {"Об'єднані інтервали": list(intervals.keys()), 'm_i': list(intervals.values()), 'np_i': list(np_i.values())},
     headers='keys', tablefmt='grid'))
 
+print('Сума імовірностей: ', sum([np_i[key] / total for key in np_i]))
 df = len(list(intervals.keys())) - 3
 
 x_cr = chi2.ppf(1 - alpha, df=df)
