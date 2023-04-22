@@ -102,11 +102,15 @@ if alpha > 1:
     alpha /= 100
 
 total = sum([intervals[key] for key in intervals])
+
 centers = calc_centers(intervals)
+
 avg = calc_avg(intervals)
-disp = calc_disp(avg, intervals, total)
-sigma = sqrt(disp)
+
+sigma = sqrt(calc_disp(avg, intervals, total))
+
 np_i = calc_np_i(intervals, sigma, avg, total)
+
 print('Сума імовірностей: ', sum([np_i[key] / total for key in np_i]))
 print(tabulate({'Інтервали': list(intervals.keys()), 'm_i': list(intervals.values()), 'z_i': list(centers.values()),
                 'np_i': list(np_i.values())},
